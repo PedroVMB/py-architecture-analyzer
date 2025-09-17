@@ -1,0 +1,10 @@
+streamlit>=1.20.0
+requests>=2.28.0
+radon>=5.1.0
+pylint>=2.15.0
+flake8>=6.0.0
+plotly>=5.10.0
+pandas>=2.0.0
+PyPDF2>=3.0.0
+python-magic>=0.4.27    # opcional para detectar tipos
+gitpython>=3.1.31       # opcional para clonar (se preferir)
