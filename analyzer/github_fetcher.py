@@ -21,7 +21,7 @@ def parse_github_url(url):
     if len(parts) < 2:
         raise ValueError("URL de GitHub inválida")
     owner, repo = parts[0], parts[1].replace('.git','')
-    branch = 'main'
+    branch = 'main' or 'master'
     if 'tree' in parts:
         try:
             idx = parts.index('tree')
