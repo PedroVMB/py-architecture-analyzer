@@ -85,6 +85,26 @@ Testabilidade
 
 O projeto contribui com uma forma prática de comparar arquiteturas, evidenciando vantagens do DDD em sistemas de e-commerce.
 
+## 📚  Testes
+
+Para rodar os testes da aplicação, basta utilizar o comando no diretório raiz da aplicação
+
+```bash
+PYTHONPATH=. pytest -v       
+```
+
+Esses testes seguem o princípio de verificação de consistência das métricas de software, que visa confirmar se os indicadores computados correspondem a propriedades mensuráveis da arquitetura.
+As principais referências que sustentam isso são:
+
+Wohlin, C. et al. (2012) — Experimentation in Software Engineering, Springer.
+→ Defende o uso de testes automatizados como meio de validação empírica de métricas de software.
+
+IEEE Std 982.1-1988 — IEEE Guide for the Application of Software Reliability Models.
+→ Aponta a importância da confiabilidade de medidas para estudos comparativos.
+
+Basili & Weiss (1984) — A Methodology for Collecting Valid Software Engineering Data.
+→ Define a importância da rastreabilidade e validade dos dados coletados.
+
 ## 👨‍💻 Tecnologias Utilizadas
 
 - Python 3.13+
