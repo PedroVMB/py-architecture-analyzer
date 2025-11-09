@@ -69,39 +69,65 @@ def complexity_metrics(py_files):
     avg_mi = sum(mi_values)/len(mi_values) if mi_values else 0
     return {'avg_cc': avg_cc, 'avg_mi': avg_mi, 'num_cc_blocks': len(cc_values)}
 
-# heurística simples de acoplamento: contar imports entre arquivos do projeto
+# heurística de acoplamento: contar imports entre arquivos do projeto
 def coupling_metric(py_files, project_root):
     """
-    Conta quantas vezes um arquivo importa outro arquivo do mesmo projeto (por nome de módulo relativo).
-    Retorna número absoluto e média por arquivo.
+    Conta quantas vezes um arquivo importa outro arquivo do mesmo projeto.
+    Isso é uma heurística para acoplamento interno.
     """
-    imports = defaultdict(int)
     module_lookup = {}
+    
+    # 1. Crie um conjunto de todos os nomes de módulos no projeto
     for f in py_files:
         rel = os.path.relpath(f, project_root)
-        module_name = rel.replace(os.sep, '.')[:-3]  # remove .py
-        module_lookup[module_name] = f
+        
+        # Handle __init__.py files correctly (e.g., src/api/__init__.py -> src.api)
+        if os.path.basename(f) == '__init__.py':
+            rel = os.path.dirname(rel)
+        else:
+            rel = rel[:-3] # remove .py
+        
+        # Ignora __init__ na raiz
+        if not rel:
+            continue
+
+        module_name = rel.replace(os.sep, '.')
+        if module_name:
+            module_lookup[module_name] = f
+    
+    # 2. Encontre os pacotes raiz (ex: 'src', 'app', 'tests')
+    root_packages = {mod.split('.')[0] for mod in module_lookup}
+    
     total_links = 0
     for f in py_files:
         try:
             with open(f, 'r', encoding='utf-8', errors='ignore') as fh:
                 src = fh.read()
             tree = ast.parse(src)
+            
             for node in ast.walk(tree):
                 if isinstance(node, ast.Import):
                     for n in node.names:
-                        name = n.name
-                        # se começa com algum módulo do projeto, conta
-                        for mod in module_lookup:
-                            if name.startswith(mod):
-                                total_links += 1
+                        name = n.name # e.g., 'src.api.models'
+                        # 3a. Checa se o 'import' é de um pacote do projeto
+                        if name.split('.')[0] in root_packages:
+                            total_links += 1
+                            
                 elif isinstance(node, ast.ImportFrom):
-                    mod = node.module or ''
-                    for known in module_lookup:
-                        if mod.startswith(known):
+                    # 3b. Checa 'from ... import ...'
+                    
+                    # Se level > 0, é uma importação relativa (ex: 'from .models import X')
+                    # Contamos todas as importações relativas como acoplamento interno.
+                    if node.level > 0:
+                        total_links += 1
+                    else:
+                        # Importação absoluta (ex: 'from src.api import models')
+                        mod = node.module or ''
+                        if mod.split('.')[0] in root_packages:
                             total_links += 1
         except Exception:
             continue
+            
     avg_links = total_links / len(py_files) if py_files else 0
     return {'total_import_links': total_links, 'avg_links_per_file': avg_links}
 
