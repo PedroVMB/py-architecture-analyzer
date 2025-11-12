@@ -11,8 +11,12 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# Presumindo que estas funções existem em seus respectivos arquivos
-# Se algum desses arquivos não existir, você terá um ModuleNotFoundError
+# Garante que nada fica cacheado de execução anterior
+if "metrics" in st.session_state:
+    del st.session_state["metrics"]
+if "scores" in st.session_state:
+    del st.session_state["scores"]
+
 try:
     from analyzer.github_fetcher import download_repo_zip, unzip_to_folder
     from analyzer.extractor import extract_uploaded_zip
@@ -58,12 +62,17 @@ with st.sidebar:
     if abs((w_man + w_comp + w_cpl + w_struct) - 1.0) > 0.01:
         st.warning("Os pesos devem somar aproximadamente 1.0. Ajustarei automaticamente na execução.")
 
-run = st.button("▶️ Rodar análise")
+st.caption(f"Pesos atuais: Manutenibilidade {w_man:.2f} | Complexidade {w_comp:.2f} | Acoplamento {w_cpl:.2f} | Estrutura {w_struct:.2f}")
+
+if st.button("▶️ Rodar análise"):
+    st.session_state["force_run"] = datetime.now().timestamp()
+
 
 # ----------------------------
 # Execução principal
 # ----------------------------
-if run:
+if "force_run" in st.session_state:
+
     tmproot = tempfile.mkdtemp()
     proj_paths = []
     
