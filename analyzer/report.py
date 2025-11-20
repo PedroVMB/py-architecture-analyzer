@@ -10,6 +10,8 @@ def show_report(metrics_a, metrics_b, scores_a, scores_b, name_a, name_b, weight
     Exibe relatório completo com seções:
     - Métricas brutas (não ponderadas)
     - Scores ponderados (dinâmicos)
+    - Comparação lado a lado
+    - Diferenças por métrica
     - Conclusão automática
     """
 
@@ -65,8 +67,8 @@ def show_report(metrics_a, metrics_b, scores_a, scores_b, name_a, name_b, weight
                  scores_b['coupling'], scores_b['structure']]
     })
 
-    df_weighted = df_weighted.melt(id_vars='Métrica', var_name='Projeto', value_name='Score Ponderado')
-    fig_weighted = px.bar(df_weighted, x='Métrica', y='Score Ponderado', color='Projeto',
+    df_weighted_melted = df_weighted.melt(id_vars='Métrica', var_name='Projeto', value_name='Score Ponderado')
+    fig_weighted = px.bar(df_weighted_melted, x='Métrica', y='Score Ponderado', color='Projeto',
                           barmode='group', title='Impacto dos Pesos sobre as Métricas')
     st.plotly_chart(fig_weighted, use_container_width=True)
 
@@ -81,7 +83,61 @@ def show_report(metrics_a, metrics_b, scores_a, scores_b, name_a, name_b, weight
     fig_radar = px.line_polar(radar_df, r='Valor Ponderado', theta='Métrica', color='Projeto', line_close=True)
     st.plotly_chart(fig_radar, use_container_width=True)
 
-    # Score final
+    # === Seção 3: Comparação direta lado a lado ===
+    st.header("📄 Comparação Direta dos Scores")
+
+    df_compare = pd.DataFrame({
+        'Métrica': ['Manutenibilidade', 'Complexidade', 'Acoplamento', 'Estrutura/Domínio'],
+        name_a: [scores_a['manutenibilidade'], scores_a['complexidade'], scores_a['coupling'], scores_a['structure']],
+        name_b: [scores_b['manutenibilidade'], scores_b['complexidade'], scores_b['coupling'], scores_b['structure']],
+        'Diferença (A - B)': [
+            scores_a['manutenibilidade'] - scores_b['manutenibilidade'],
+            scores_a['complexidade'] - scores_b['complexidade'],
+            scores_a['coupling'] - scores_b['coupling'],
+            scores_a['structure'] - scores_b['structure'],
+        ]
+    })
+
+    st.dataframe(df_compare, use_container_width=True)
+
+    # === Seção 4: Gráfico simples de comparação por métrica ===
+    st.subheader("🔍 Comparação por Métrica")
+
+    df_compare_melted = df_compare.melt(
+        id_vars='Métrica',
+        value_vars=[name_a, name_b],
+        var_name='Projeto',
+        value_name='Score'
+    )
+
+    fig_compare_simple = px.bar(
+        df_compare_melted,
+        x='Métrica',
+        y='Score',
+        color='Projeto',
+        barmode='group',
+        title='Comparação por Métrica'
+    )
+
+    st.plotly_chart(fig_compare_simple, use_container_width=True)
+
+
+    # === Seção 5: Resultado por métrica ===
+    st.subheader("🧠 Resultado por Métrica")
+
+    for metric, a_value, b_value in zip(
+        df_compare['Métrica'],
+        df_compare[name_a],
+        df_compare[name_b]
+    ):
+        if a_value > b_value:
+            st.success(f"✓ {metric}: **{name_a} venceu** ({a_value:.1f} vs {b_value:.1f})")
+        elif b_value > a_value:
+            st.warning(f"✓ {metric}: **{name_b} venceu** ({b_value:.1f} vs {a_value:.1f})")
+        else:
+            st.info(f"✓ {metric}: empate ({a_value:.1f})")
+
+    # === Score final ===
     st.subheader("🌐 Score Arquitetural Global")
     df_score = pd.DataFrame({
         'Projeto': [name_a, name_b],
@@ -110,6 +166,7 @@ def show_report(metrics_a, metrics_b, scores_a, scores_b, name_a, name_b, weight
     (ex: priorizar manutenibilidade ou modularidade).
     """)
 
+    # Debug
     with st.expander("📂 Debug e Pesos Aplicados"):
         st.json({"Pesos": weights})
         st.json({"Scores Projeto A": scores_a})
