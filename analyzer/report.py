@@ -100,28 +100,6 @@ def show_report(metrics_a, metrics_b, scores_a, scores_b, name_a, name_b, weight
 
     st.dataframe(df_compare, use_container_width=True)
 
-    # === Seção 4: Gráfico simples de comparação por métrica ===
-    st.subheader("🔍 Comparação por Métrica")
-
-    df_compare_melted = df_compare.melt(
-        id_vars='Métrica',
-        value_vars=[name_a, name_b],
-        var_name='Projeto',
-        value_name='Score'
-    )
-
-    fig_compare_simple = px.bar(
-        df_compare_melted,
-        x='Métrica',
-        y='Score',
-        color='Projeto',
-        barmode='group',
-        title='Comparação por Métrica'
-    )
-
-    st.plotly_chart(fig_compare_simple, use_container_width=True)
-
-
     # === Seção 5: Resultado por métrica ===
     st.subheader("🧠 Resultado por Métrica")
 
